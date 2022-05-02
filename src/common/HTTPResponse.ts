@@ -48,7 +48,7 @@ export class HTTPResponse {
   private _request: HTTPRequest;
   private _contentPromise: Promise<Buffer> | null = null;
   private _bodyLoadedPromise: Promise<Error | void>;
-  private _bodyLoadedPromiseFulfill: (err: Error | void) => void;
+  private _bodyLoadedPromiseFulfill: (err: Error | void) => void = () => {};
   private _remoteAddress: RemoteAddress;
   private _status: number;
   private _statusText: string;
@@ -76,8 +76,8 @@ export class HTTPResponse {
     });
 
     this._remoteAddress = {
-      ip: responsePayload.remoteIPAddress,
-      port: responsePayload.remotePort,
+      ip: responsePayload.remoteIPAddress || '',
+      port: responsePayload.remotePort || 0,
     };
     this._statusText =
       this._parseStatusTextFromExtrInfo(extraInfo) ||
@@ -94,7 +94,7 @@ export class HTTPResponse {
     this._securityDetails = responsePayload.securityDetails
       ? new SecurityDetails(responsePayload.securityDetails)
       : null;
-    this._timing = responsePayload.timing;
+    this._timing = responsePayload.timing || null;
   }
 
   /**
@@ -117,7 +117,10 @@ export class HTTPResponse {
    * @internal
    */
   _resolveBody(err: Error | null): void {
-    return this._bodyLoadedPromiseFulfill(err);
+    if (err) {
+      return this._bodyLoadedPromiseFulfill(err);
+    }
+    return this._bodyLoadedPromiseFulfill();
   }
 
   /**
